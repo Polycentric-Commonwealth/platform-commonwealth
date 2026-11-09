@@ -1,0 +1,106 @@
+{{define "base"}}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{.Title}} – {{.Name}}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{if .Official}}
+<div class="officials-band">
+  <div class="wrap">
+    <nav aria-label="Officials">
+      <ul>
+        <li><a href="/officials"{{if eq .Section "officials-fund"}} aria-current="page"{{end}}>Commons Fund</a></li>
+        <li><a href="/officials/members"{{if eq .Section "officials-members"}} aria-current="page"{{end}}>Members</a></li>
+        <li><a href="/officials/audits"{{if eq .Section "officials-audits"}} aria-current="page"{{end}}>Audit Office</a></li>
+        <li><a href="/officials/ledger"{{if eq .Section "officials-ledger"}} aria-current="page"{{end}}>Ledger</a></li>
+        <li><a href="/officials/team"{{if eq .Section "officials-team"}} aria-current="page"{{end}}>Officials</a></li>
+      </ul>
+    </nav>
+    <form method="post" action="/officials/logout">
+      {{with .Me}}<span class="who">{{.Name}}, {{.Role}}</span>{{end}}
+      <input type="hidden" name="csrf" value="{{.CSRF}}">
+      <button type="submit">Sign out</button>
+    </form>
+  </div>
+</div>
+{{end}}
+<header class="site-header">
+  <div class="wrap">
+    <div>
+      <p class="state-name"><a href="/">{{.Name}}</a></p>
+      <p class="state-of">The global layer of the Polycentric Commonwealth</p>
+    </div>
+    <nav class="main-nav" aria-label="Main">
+      <ul>
+        <li><a href="/"{{if eq .Section "overview"}} aria-current="page"{{end}}>Overview</a></li>
+        <li><a href="/members"{{if eq .Section "members"}} aria-current="page"{{end}}>Members</a></li>
+        <li><a href="/dividends"{{if eq .Section "dividends"}} aria-current="page"{{end}}>Dividends</a></li>
+        <li><a href="/audits"{{if eq .Section "audits"}} aria-current="page"{{end}}>Audits</a></li>
+        <li><a href="/uniqueness"{{if eq .Section "uniqueness"}} aria-current="page"{{end}}>Uniqueness</a></li>
+        <li><a href="/ledger"{{if eq .Section "ledger"}} aria-current="page"{{end}}>Public ledger</a></li>
+        {{if not .Official}}<li><a href="/officials"{{if eq .Section "login"}} aria-current="page"{{end}}>Officials</a></li>{{end}}
+      </ul>
+    </nav>
+  </div>
+  <div class="wrap"><hr></div>
+</header>
+<main id="main">
+  <div class="wrap">
+    {{with .Notice}}<p class="notice" role="status">{{.}}</p>{{end}}
+    {{with .Error}}<p class="notice error" role="alert">{{.}}</p>{{end}}
+    {{template "content" .}}
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    <p>Instance <strong>{{.Instance}}</strong>, the trust anchor every member pins. Every official act is signed and recorded in the <a href="/ledger">public ledger</a>. The Commonwealth holds no register of people.</p>
+    <p>Machine-readable: <a href="/.well-known/pc-instance">instance description</a>, <a href="/pc/ledger/checkpoint">latest checkpoint</a>, <a href="/pc/uniqueness/config">uniqueness configuration</a>.</p>
+  </div>
+</footer>
+</body>
+</html>{{end}}
+
+{{define "periods"}}
+{{range .Periods}}
+<section class="period">
+  <h2>{{.Period.Period}}</h2>
+  {{if eq .Status "settled"}}
+  <p>Settled {{fmtTime .SettledAt}}: a pool of {{money .Pool}} XCU among {{.Recipients}} people in {{.Counts | len}} {{if eq (len .Counts) 1}}State{{else}}States{{end}}, <strong>{{money .PerPerson}} XCU per person</strong>. {{money .PaidOut}} XCU paid out; the remainder from rounding stays in the fund.</p>
+  {{else}}
+  <p>Open: {{len .Counts}} {{if eq (len .Counts) 1}}State has{{else}}States have{{end}} reported {{.Total}} recipients so far.</p>
+  {{if and $.Official ($.Me.Can "treasurer")}}
+  <form class="row" method="post" action="/officials/settle/{{.Period.Period}}">
+    <input type="hidden" name="csrf" value="{{$.CSRF}}">
+    <label>Pool for {{.Period.Period}}, in XCU <input name="pool" required inputmode="decimal" pattern="(0|[1-9][0-9]{0,17})(\.[0-9]{1,6})?" autocomplete="off"></label>
+    <button class="primary" type="submit">Settle {{.Period.Period}}</button>
+  </form>
+  <p class="muted">Settling divides the pool equally among all {{.Total}} recipients, rounding down to a millionth of an XCU, and sends each State its settlement. Counts that arrive later are refused.</p>
+  {{end}}
+  {{end}}
+  <div class="table-scroll">
+  <table class="stack-sm">
+    <thead><tr><th scope="col">State</th><th scope="col" class="num">Recipients</th><th scope="col" class="num">Settled</th><th scope="col">Status</th><th scope="col">Audit</th>{{if $.Official}}<th scope="col">Action</th>{{end}}</tr></thead>
+    <tbody>
+    {{range .Counts}}
+      <tr>
+        <td data-label="State">{{.State}}</td>
+        <td data-label="Recipients" class="num">{{.Recipients}}</td>
+        <td data-label="Settled" class="num">{{if .Total}}{{money .Total}} XCU{{else}}–{{end}}</td>
+        <td data-label="Status"><span class="status {{.StatusClass}}">{{.Status}}</span></td>
+        <td data-label="Audit">{{if .AuditClass}}<span class="status {{.AuditClass}}">{{.Audit}}</span>{{else}}<span class="muted">{{.Audit}}</span>{{end}}</td>
+        {{if $.Official}}<td data-label="Action">{{if and .Resend ($.Me.Can "treasurer")}}<form class="inline-form" method="post" action="/officials/resend/{{.Resend}}"><input type="hidden" name="csrf" value="{{$.CSRF}}"><button class="secondary" type="submit">Send again</button></form>{{else}}<span class="muted">–</span>{{end}}</td>{{end}}
+      </tr>
+    {{end}}
+    </tbody>
+  </table>
+  </div>
+</section>
+{{else}}
+<p>No State has reported an eligibility count yet.</p>
+{{end}}
+{{end}}
+
+{{define "fingerprint"}}<span class="fingerprint{{if .Large}} large{{end}}" role="img" aria-label="Fingerprint {{.Hex}}">{{range .Cells}}<span class="c{{.}}"></span>{{end}}</span>{{end}}

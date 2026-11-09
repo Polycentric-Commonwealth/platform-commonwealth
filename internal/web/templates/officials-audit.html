@@ -1,0 +1,44 @@
+{{define "content"}}
+<p><a href="/officials/audits">Audit Office</a></p>
+{{with .Audit}}
+<h1>Audit of {{.State}}, {{.Period}}</h1>
+<p class="lead">{{.Recipients}} people counted.
+{{if eq .Status "requested"}}Waiting for the State to open the sample.
+{{else if eq .Status "checking"}}{{.Sampled}} sampled; {{.Pending}} still to check in the field.
+{{else}}Finding issued by {{.IssuedBy}}: {{.Unverified}} of {{.Sampled}} unverified. The sampled people's details have been erased.{{end}}</p>
+{{if eq .Status "checking"}}
+<p>These details are personal data, shown only to auditors for the field check. Record whether each person was found where the State says they live.</p>
+{{if and (eq .Pending 0) ($.Me.Can "auditor")}}
+<form method="post" action="/officials/audits/{{.Request}}/finding">
+  <input type="hidden" name="csrf" value="{{$.CSRF}}">
+  <button class="primary" type="submit">Issue the finding</button>
+</form>
+<p class="muted">The finding is sent to {{.State}} and logged. Then the details below are erased for good.</p>
+{{end}}
+{{end}}
+{{end}}
+
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col" class="num">Position</th><th scope="col">Person</th><th scope="col">Structural check</th><th scope="col">Field check</th></tr></thead>
+  <tbody>
+  {{range .Openings}}
+    <tr id="p{{.Position}}">
+      <td data-label="Position" class="num">{{.Position}}</td>
+      <td data-label="Person">{{if .Name}}<span class="cell">{{.Name}}<br><span class="muted">Born {{.BirthDate}}, resident {{.Ref}}</span></span>{{else}}<span class="muted">Erased</span>{{end}}</td>
+      <td data-label="Structural check">{{if .Valid}}<span class="status ok">Valid</span>{{else}}<span class="status bad">{{.Problem}}</span>{{end}}</td>
+      <td data-label="Field check">
+        {{if .Field}}<span class="cell"><span class="status {{if eq .Field "found"}}ok{{else}}bad{{end}}">{{if eq .Field "found"}}Found{{else}}Not found{{end}}</span><br><span class="muted">{{.CheckedBy}}, {{fmtTime .CheckedAt}}</span></span>{{end}}
+        {{if and .Valid (eq $.Audit.Status "checking") ($.Me.Can "auditor")}}<span class="cell">
+          <form class="inline-form" method="post" action="/officials/audits/{{$.Audit.Request}}/check"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="position" value="{{.Position}}"><input type="hidden" name="result" value="found"><button class="secondary" type="submit">Found</button></form>
+          <form class="inline-form" method="post" action="/officials/audits/{{$.Audit.Request}}/check"><input type="hidden" name="csrf" value="{{$.CSRF}}"><input type="hidden" name="position" value="{{.Position}}"><input type="hidden" name="result" value="not-found"><button class="secondary" type="submit">Not found</button></form>
+        </span>{{else if not .Field}}{{if not .Valid}}<span class="muted">Counts as unverified</span>{{else}}<span class="muted">–</span>{{end}}{{end}}
+      </td>
+    </tr>
+  {{else}}
+    <tr><td colspan="4">The State has not answered yet.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

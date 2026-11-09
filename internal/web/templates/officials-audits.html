@@ -1,0 +1,26 @@
+{{define "content"}}
+<h1>Audit Office</h1>
+<p class="lead">An audit starts automatically for every count. When the State answers, check each sampled person in the field, then issue the finding.</p>
+{{template "audit-table" .}}
+{{end}}
+
+{{define "audit-table"}}
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col">Period</th><th scope="col">State</th><th scope="col" class="num">Recipients</th><th scope="col">Stage</th><th scope="col">Result</th></tr></thead>
+  <tbody>
+  {{range .Audits}}
+    <tr>
+      <td data-label="Period">{{.Period}}</td>
+      <td data-label="State"><a href="/officials/audits/{{.Request}}">{{.State}}</a></td>
+      <td data-label="Recipients" class="num">{{.Recipients}}</td>
+      <td data-label="Stage">{{if eq .Status "requested"}}Waiting for the State{{else if eq .Status "checking"}}{{if .Pending}}{{.Pending}} of {{.Sampled}} still to check{{else}}Ready for a finding{{end}}{{else}}Finding issued{{end}}</td>
+      <td data-label="Result">{{if eq .Status "finding"}}{{if eq .Unverified 0}}<span class="status ok">Passed: all {{.Sampled}} verified</span>{{else}}<span class="status bad">{{.Unverified}} of {{.Sampled}} not found</span>{{end}}{{else}}<span class="muted">–</span>{{end}}</td>
+    </tr>
+  {{else}}
+    <tr><td colspan="5">No audits yet.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

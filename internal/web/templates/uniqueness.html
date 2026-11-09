@@ -1,0 +1,27 @@
+{{define "content"}}
+<h1>Uniqueness</h1>
+<p class="lead">The uniqueness registry finds a person counted by two States without any list of people. Each State turns its residents' birth details into pseudonymous tokens with a key split among independent operators, and registers only the tokens here.</p>
+{{with .Config}}
+<dl class="facts">
+  <div><dt>Key epoch</dt><dd>{{.Epoch}}</dd></div>
+  <div><dt>Operators needed</dt><dd>{{len .Commitments}} of {{len .Operators}}</dd></div>
+</dl>
+<p>Operators: {{range $i, $o := .Operators}}{{if $i}}, {{end}}{{$o.Instance}}{{end}}. No operator alone can compute a token, and none ever sees a person's details.</p>
+<h2>Registered tokens</h2>
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col">State</th><th scope="col" class="num">Tokens</th><th scope="col" class="num">Open conflicts</th></tr></thead>
+  <tbody>
+  {{range $.Uniqueness}}
+    <tr><td data-label="State">{{.State}}</td><td data-label="Tokens" class="num">{{.Tokens}}</td><td data-label="Open conflicts" class="num">{{.Conflicts}}</td></tr>
+  {{else}}
+    <tr><td colspan="3">No State has registered tokens yet.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+<p class="muted">A conflict is a token held by two States: usually a person who moved. The States resolve it between them; nobody loses a dividend because of a conflict alone.</p>
+{{else}}
+<p>No uniqueness configuration has been published yet.</p>
+{{end}}
+{{end}}

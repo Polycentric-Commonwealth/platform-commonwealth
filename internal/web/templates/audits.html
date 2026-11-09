@@ -1,0 +1,26 @@
+{{define "content"}}
+<h1>Audits</h1>
+<p class="lead">The Audit Office checks a random sample of the people behind every count. The State reveals only the sampled people, to the Audit Office alone, and their details are erased once the finding is issued.</p>
+{{template "audit-table" .}}
+{{end}}
+
+{{define "audit-table"}}
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col">Period</th><th scope="col">State</th><th scope="col" class="num">Recipients</th><th scope="col">Stage</th><th scope="col">Result</th></tr></thead>
+  <tbody>
+  {{range .Audits}}
+    <tr>
+      <td data-label="Period">{{.Period}}</td>
+      <td data-label="State">{{if $.Official}}<a href="/officials/audits/{{.Request}}">{{.State}}</a>{{else}}{{.State}}{{end}}</td>
+      <td data-label="Recipients" class="num">{{.Recipients}}</td>
+      <td data-label="Stage">{{if eq .Status "requested"}}Waiting for the State{{else if eq .Status "checking"}}Field checks: {{.Pending}} of {{.Sampled}} still to check{{else}}Finding issued{{end}}</td>
+      <td data-label="Result">{{if eq .Status "finding"}}{{if eq .Unverified 0}}<span class="status ok">Passed: all {{.Sampled}} verified</span>{{else}}<span class="status bad">{{.Unverified}} of {{.Sampled}} not found</span>{{end}}{{else}}<span class="muted">–</span>{{end}}</td>
+    </tr>
+  {{else}}
+    <tr><td colspan="5">No audits yet. One starts automatically for every count a State reports.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

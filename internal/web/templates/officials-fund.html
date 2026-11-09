@@ -1,0 +1,6 @@
+{{define "content"}}
+<h1>Commons Fund</h1>
+<p class="lead">Counts arrive from States through the period. Settle a period once every State has reported: the pool is divided equally among everyone counted.</p>
+{{if not (.Me.Can "treasurer")}}<p class="muted">Treasurers settle periods. Your role is {{.Me.Role}}.</p>{{end}}
+{{template "periods" .}}
+{{end}}

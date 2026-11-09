@@ -1,0 +1,22 @@
+{{define "content"}}
+<h1>Overview</h1>
+<p class="lead">The Commonwealth pays every person in its member States an equal dividend from the Commons Fund, audits the counts it pays on, and keeps the few global registers the charter allows. It sees States and totals, never individuals.</p>
+
+<dl class="facts">
+  <div><dt>Member States</dt><dd>{{.StateCount}}</dd></div>
+  <div><dt>Member Regions</dt><dd>{{.RegionCount}}</dd></div>
+  <div><dt>Latest dividend</dt><dd>{{with .Latest}}{{money .PerPerson}} XCU{{else}}None yet{{end}}</dd></div>
+  <div><dt>Records in the ledger</dt><dd>{{.LedgerSize}}</dd></div>
+</dl>
+
+{{with .Latest}}
+<p>The most recent dividend, for {{.Period}}, was {{money .PerPerson}} XCU per person for {{.Recipients}} people. <a href="/dividends">See every period</a>.</p>
+{{end}}
+
+<h2>How a dividend is paid</h2>
+<p>Each State reports how many people it counts, and commits to exactly who they are without revealing any names. When the period closes, the Commons Fund divides its pool equally among everyone counted and sends each State its share. The State pays its residents and confirms the total.</p>
+<h2>How counts are checked</h2>
+<p>The Audit Office samples every count at random and checks the sampled people in the field. A State that counted people who cannot be found repays three times the estimated overpayment. <a href="/audits">See every audit</a>.</p>
+<h2>How anyone can check the Commonwealth</h2>
+<p>Every attestation, settlement, audit request and finding is a signed record in the <a href="/ledger">public ledger</a>, which member instances witness. Nothing can be changed or backdated without it showing.</p>
+{{end}}

@@ -1,0 +1,31 @@
+{{define "content"}}
+<h1>Members</h1>
+<p class="lead">Regions and States whose keys the Commonwealth has attested. States in a member Region are attested by their Region.</p>
+{{template "member-table" .}}
+{{end}}
+
+{{define "member-table"}}
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col">Name</th><th scope="col">Instance</th><th scope="col">Layer</th><th scope="col">Attested</th><th scope="col">Status</th>{{if and .Official (.Me.Can "members")}}<th scope="col">Action</th>{{end}}</tr></thead>
+  <tbody>
+  {{range .Members}}
+    <tr>
+      <td data-label="Name">{{.Name}}</td>
+      <td data-label="Instance">{{.Instance}}</td>
+      <td data-label="Layer">{{if eq .Layer "state"}}State{{else}}Region{{end}}</td>
+      <td data-label="Attested">{{fmtTime .AttestedAt}}</td>
+      <td data-label="Status">{{if eq .Status "active"}}<span class="status ok">Active</span>{{else}}<span class="status bad">Suspended</span>{{end}}</td>
+      {{if and $.Official ($.Me.Can "members")}}<td data-label="Action"><span class="cell">
+        <a href="/officials/members/{{.Instance}}/attestation.json">Attestation</a>
+        <form class="inline-form" method="post" action="/officials/members/{{.Instance}}/status"><input type="hidden" name="csrf" value="{{$.CSRF}}">
+        {{if eq .Status "active"}}<input type="hidden" name="status" value="suspended"><button class="secondary" type="submit">Suspend</button>{{else}}<input type="hidden" name="status" value="active"><button class="secondary" type="submit">Reinstate</button>{{end}}</form>
+      </span></td>{{end}}
+    </tr>
+  {{else}}
+    <tr><td colspan="6">No members yet.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}

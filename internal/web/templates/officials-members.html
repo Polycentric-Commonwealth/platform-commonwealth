@@ -1,0 +1,67 @@
+{{define "content"}}
+<h1>Members</h1>
+{{with .Attestation}}
+<div class="handover" role="status">
+  <p>Give the member this attestation. They add it with <code>pcstate attestation add</code>.</p>
+  <textarea class="code" rows="8" readonly>{{.}}</textarea>
+</div>
+{{end}}
+
+{{if .Me.Can "members"}}
+{{with .Review}}
+<h2>Attest {{.Name}}</h2>
+<dl class="checks">
+  <dt>Instance</dt><dd>{{.Instance}}</dd>
+  <dt>Layer</dt><dd>{{.Layer}}</dd>
+  <dt>Endpoint</dt><dd>{{index .Endpoints "base"}}</dd>
+  {{range .Keys}}<dt>Key {{.ID}}</dt><dd><strong class="keyprint">{{keyFingerprint .PublicKey}}</strong>{{if .RevokedAt}} <span class="status bad">revoked</span>{{end}}</dd>{{end}}
+</dl>
+<p>Read the key fingerprints to the member's officials by phone or in person, and attest only if they match what their platform shows.</p>
+<form class="stack" method="post" action="/officials/members/attest">
+  <input type="hidden" name="csrf" value="{{$.CSRF}}">
+  <input type="hidden" name="description" value="{{$.ReviewJSON}}">
+  <label class="check"><input type="checkbox" name="confirmed" value="yes" required> I confirmed these keys with {{.Name}}</label>
+  <div><button class="primary" type="submit">Attest {{.Instance}}</button> <a href="/officials/members">Cancel</a></div>
+</form>
+{{else}}
+<h2>Attest a Region or State</h2>
+<p>Paste the member's signed description: the <code>description.json</code> its platform created.</p>
+<form class="stack" method="post" action="/officials/members/review">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Signed description <textarea class="code" name="description" rows="8" required spellcheck="false">{{.ReviewJSON}}</textarea></label>
+  <div><button class="primary" type="submit">Review</button></div>
+</form>
+{{end}}
+{{else}}
+<p class="muted">The members office attests members. Your role is {{.Me.Role}}.</p>
+{{end}}
+
+<h2>Current members</h2>
+{{template "member-table" .}}
+{{end}}
+
+{{define "member-table"}}
+<div class="table-scroll">
+<table class="stack-sm">
+  <thead><tr><th scope="col">Name</th><th scope="col">Instance</th><th scope="col">Layer</th><th scope="col">Attested</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead>
+  <tbody>
+  {{range .Members}}
+    <tr>
+      <td data-label="Name">{{.Name}}</td>
+      <td data-label="Instance">{{.Instance}}</td>
+      <td data-label="Layer">{{if eq .Layer "state"}}State{{else}}Region{{end}}</td>
+      <td data-label="Attested">{{fmtTime .AttestedAt}} by {{.AttestedBy}}</td>
+      <td data-label="Status">{{if eq .Status "active"}}<span class="status ok">Active</span>{{else}}<span class="status bad">Suspended</span>{{end}}</td>
+      <td data-label="Action"><span class="cell">
+        <a href="/officials/members/{{.Instance}}/attestation.json">Download attestation</a>
+        {{if $.Me.Can "members"}}<form class="inline-form" method="post" action="/officials/members/{{.Instance}}/status"><input type="hidden" name="csrf" value="{{$.CSRF}}">
+        {{if eq .Status "active"}}<input type="hidden" name="status" value="suspended"><button class="secondary" type="submit">Suspend</button>{{else}}<input type="hidden" name="status" value="active"><button class="secondary" type="submit">Reinstate</button>{{end}}</form>{{end}}
+      </span></td>
+    </tr>
+  {{else}}
+    <tr><td colspan="6">No members yet.</td></tr>
+  {{end}}
+  </tbody>
+</table>
+</div>
+{{end}}
